@@ -924,7 +924,7 @@ END:VCALENDAR';
         $cachegroup = 'SimpleicalBlock';
         $options = array(
             'lifetime'     => (int) $instance['transient_time'], // seems to be minutes already, not saved, evaluated on get
-            'caching'      => false,
+            'caching'      => true,
             'language'     => 'en-GB',
             'application'  => 'site',
         );
