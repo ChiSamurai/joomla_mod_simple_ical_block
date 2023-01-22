@@ -12,21 +12,21 @@
  *  replace get_option('timezone_string') and wp_timezone by Factory::getApplication()->get('offset') and ...
  *  replace wp_date( by date(
  *  replace transient by cache type 'output'; split transientId in cahegroup and cacheID to distinguish the group in system clear cache
- * 0.0.6 11-8-2022 added try around $this->http->get($url) 
- *   added start index 1 to array protocols to prevent 0 as incorrect fals result of array_search to 'http'. 
+ * 0.0.6 11-8-2022 added try around $this->http->get($url)
+ *   added start index 1 to array protocols to prevent 0 as incorrect fals result of array_search to 'http'.
  *   replaced webcal:// by http:// before http->get() to prevent curl protocol error.
  * 0.0.7 moved instantiating http to fetch() because it is only local used.
  *   Added header Accept-Encoding: '' (['headers' => ['Accept-Encoding' => ['']]]); to let curl accepts all known encoding and decode them.
- *   Then removed decoding based on Content-Encoding header because body is already decoded by curl. 
- * 2.0.1 back to static functions getData() and fetch() only instantiate object in fetch when parsing must be done (like it always was in WP)   
+ *   Then removed decoding based on Content-Encoding header because body is already decoded by curl.
+ * 2.0.1 back to static functions getData() and fetch() only instantiate object in fetch when parsing must be done (like it always was in WP)
  * 2.1.0 calendar_id can be array of ID;class elements; elements foreach in fetch() to parse each element; sort moved to fetch() after foreach.
  *   parse() directly add in events in $this->events, add html-class from new input parameter to each event
  *   Make properties from most important parameters during instantiation of the class to limit copying of input params in several functions.
  *   Removed htmlspecialchars() from summary, description and location, to replace it in the output template/block
  *   Combined getFutureEvents and Limit array. usort eventsortcomparer now on start, end, cal_ord and with arithmic subtraction because all are integers.
- *   Parse event DURATION; (only) When DTEND is empty: determine end from start plus duration, when duration is empty and start is DATE start plus one day, else = start  
- *   Parse event BYSETPOS;  Parse WKST (default MO) 
- * 2.1.1 Solved Warning: Array to string conversion in .../Transport/Curl.php on line 183 that occured after using php 8.  
+ *   Parse event DURATION; (only) When DTEND is empty: determine end from start plus duration, when duration is empty and start is DATE start plus one day, else = start
+ *   Parse event BYSETPOS;  Parse WKST (default MO)
+ * 2.1.1 Solved Warning: Array to string conversion in .../Transport/Curl.php on line 183 that occured after using php 8.
  */
 namespace WaasdorpSoekhan\Module\Simpleicalblock\Site;
 // no direct access
@@ -37,7 +37,7 @@ use Joomla\CMS\Factory;
 use Joomla\Http\Http;
 
 class IcsParser {
-    
+
     const TOKEN_BEGIN_VEVENT = "BEGIN:VEVENT";
     const TOKEN_END_VEVENT = "END:VEVENT";
     const TOKEN_BEGIN_VTIMEZONE = "\nBEGIN:VTIMEZONE";
@@ -77,7 +77,7 @@ LOCATION:Loc. unknown
 SUMMARY:X Monthly 4th weekend
 END:VEVENT
 END:VCALENDAR';
-    
+
     /**
      *
      * @var array english abbreviations and names of weekdays.
@@ -280,7 +280,21 @@ END:VCALENDAR';
      * @since  2.0.0
      */
     protected $timezone_string = 'UTC';
-    /**
+	/**
+	 * The starting date from which on the events should be displayed (
+	 *
+	 * @var mixed|null
+	 * @since TBD
+	 */
+	protected $date_start = NULL;
+	/**
+	 * The end date from which on the events should be displayed (
+	 *
+	 * @var mixed|null
+	 * @since TBD
+	 */
+	protected $date_end = NULL;
+	/**
      * Constructor.
      *
      * @param string  $calendar_ids Comma separated list of Id's or url's of the calendar to fetch data. Each Id/url may be followed by semicolon and a html-class
@@ -291,11 +305,13 @@ END:VCALENDAR';
      *
      * @since
      */
-    public function __construct($calendar_ids, $event_count = 0, $event_period = 0)
+    public function __construct($calendar_ids, $event_count = 0, $event_period = 0, $date_start = NULL, $date_end = NULL)
     {
         $this->timezone_string = Factory::getApplication()->get('offset');
         $this->now = time();
         $this->calendar_ids = $calendar_ids;
+		$this->date_start = $date_start;
+		$this->date_end = $date_end;
         $this->event_count = $event_count;
         $this->penddate = (0 < $event_period) ? strtotime("+$event_period day"): $this->now;
     }
@@ -304,7 +320,7 @@ END:VCALENDAR';
      *
      * @param   string      $str the   content of the file to parse as a string.
      * @param   string      $cal_class the html-class for this calendar
-     * @param   int         $cal_ord   order in list of this calendar 
+     * @param   int         $cal_ord   order in list of this calendar
      *
      * @return  array       $this->events the parsed event objects.
      *
@@ -313,7 +329,7 @@ END:VCALENDAR';
     public function parse($str ,   $cal_class = '', $cal_ord = 0) {
         $curstr = $str;
         $haveVevent = true;
-        
+
         do {
             $startpos = strpos($curstr, self::TOKEN_BEGIN_VEVENT);
             if ($startpos !== false) {
@@ -370,7 +386,7 @@ END:VCALENDAR';
                     $edtendd->setTimezone($timezone);
                     $edurationsecs =  $e->end - $e->start;
                     $nowstart = $this->now - $edurationsecs -1;
-                    
+
                     $rrules = array();
                     $rruleStrings = explode(';', $e->rrule);
                     foreach ($rruleStrings as $s) {
@@ -446,7 +462,7 @@ END:VCALENDAR';
                                 foreach ($bym as $by) {
                                     $newstart->setTimestamp($freqstart->getTimestamp()) ;
                                     if (isset($rrules['bymonth'])){
-                                        
+
                                         if ($frequency == 'YEARLY' ){ // expand
                                             $newstart->setDate($fY , $by, 1);
                                             $ndays = intval($newstart->format('t'));
@@ -524,7 +540,7 @@ END:VCALENDAR';
                                                             } elseif ($byi < 0) {
                                                                 $wdl->sub(new \DateInterval('P' . (- $byi - 1) . 'W'));
                                                                 $fset[] = $wdl->getTimestamp();
-                                                                
+
                                                             }
                                                             else {
                                                                 while ($wdf <= $wdl) {
@@ -637,13 +653,13 @@ END:VCALENDAR';
         } while($haveVevent);
     }
 /*
- * Limit events to the first event_count events from today. 
+ * Limit events to the first event_count events from today.
  * Events are already sorted
- * 
+ *
  * @return  array       remaining event objects.
  */
     public function getFutureEvents( ) {
-        // 
+        //
         $newEvents = array();
         $i=0;
         foreach ($this->events as $e) {
@@ -658,7 +674,33 @@ END:VCALENDAR';
         }
         return $newEvents;
     }
-    
+
+	/*
+ * Limit events to a timespan defined by a start date and/or an end date.
+ *
+ * @return  array       filtered event objects.
+ */
+	private function getEventsByDateRange() {
+		$newEvents = array();
+		$i=0;
+		$startDateTimestamp = $this->date_start ? date_create($this->date_start)->getTimestamp() : null;
+		$endDateTimestamp = $this->date_end ? date_create($this->date_end)->getTimestamp() : null;
+		foreach ($this->events as $e) {
+			if (
+				(!$this->date_start|| $e->start >= $startDateTimestamp) &&
+				(!$this->date_end || $e->end <= $endDateTimestamp)
+				) {
+					$i++;
+				if ($i > $this->event_count) {
+					break;
+				}
+				$newEvents[] = $e;
+			}
+		}
+		return $newEvents;
+
+	}
+
     public function getAll() {
         return $this->events;
     }
@@ -672,13 +714,13 @@ END:VCALENDAR';
         if (strlen($datetime) < 8) {
             return -1;
         }
-        
+
         if (strlen($datetime) >= 13)  {
             $hms = substr($datetime, 9, 4) . '00';
         } else {
             $hms = '000000';
         }
-        
+
         // check if it is GMT
         $lastChar = $datetime[strlen($datetime) - 1];
         if ($lastChar == 'Z') {
@@ -712,7 +754,7 @@ END:VCALENDAR';
      * @param  string $datetime date time with format YYYYMMDDTHHMMSSZ last letter ='Z' means Zero-time (='UTC' time).
      * @return \DateTimeZone object
      */
-    
+
     private function parseIanaTimezoneid ($ptzid = '', $datetime = '') {
         if (8 < strlen($datetime) && 'Z'== $datetime[strlen($datetime) - 1]) $ptzid = 'UTC';
         try {
@@ -729,7 +771,7 @@ END:VCALENDAR';
         if (isset($timezone)) return $timezone;
         return new \DateTimeZone('UTC');
     }
-    
+
     /**
      * Compare events order for usort.
      *
@@ -741,9 +783,9 @@ END:VCALENDAR';
         if ($a->start == $b->start) {
             if ($a->end == $b->end) {
                 return ($a->cal_ord - $b->cal_ord);
-            } 
+            }
             else return ($a->end - $b->end);
-        } 
+        }
         else return ($a->start - $b->start);
     }
     /**
@@ -756,7 +798,7 @@ END:VCALENDAR';
         $lines = explode("\n", $eventStr);
         $eventObj = new \StdClass;
         $tokenprev = "";
-        
+
         foreach($lines as $l) {
             // trim() to remove \n\r\0 but not space to keep a clean line with any spaces at the beginning or end of the line
             $l =trim($l, "\n\r\0");
@@ -878,20 +920,20 @@ END:VCALENDAR';
      */
     static function getData($instance)
     {
-        $cacheId =  $instance['blockid']   ;
+        $cacheId =  $instance['blockid'];
         $cachegroup = 'SimpleicalBlock';
         $options = array(
             'lifetime'     => (int) $instance['transient_time'], // seems to be minutes already, not saved, evaluated on get
-            'caching'      => true,
+            'caching'      => false,
             'language'     => 'en-GB',
             'application'  => 'site',
         );
         $cachecontroller = new OutputController($options);
-        
+
         //        if ($instance['clear_cache_now']) $cachecontroller->cache->remove($cacheId, $cachegroup);
         if(false === ( $data = $cachecontroller->get( $cacheId, $cachegroup))) {
-            $parser = new IcsParser($instance['calendar_id'], $instance['event_count'], $instance['event_period']);
-            $data = $parser->fetch( );
+            $parser = new IcsParser($instance['calendar_id'], $instance['event_count'], $instance['event_period'], $instance['date_start'], $instance['date_end']);
+            $data = $parser->fetch();
             // do not cache data if fetching failed
             if ($data) {
                 $cachecontroller->store($data, $cacheId, $cachegroup );
@@ -899,8 +941,9 @@ END:VCALENDAR';
         }
         return $data;
     }
+
     /**
-     * Fetches from calender using calendar_ids, event_count and 
+     * Fetches from calender using calendar_ids, event_count and
      *
      *    ['calendar_id']  id or url of the calender to fetch data
      *    ['event_count']  max number of events to return
@@ -941,7 +984,7 @@ END:VCALENDAR';
                 }
                 $httpBody = $httpResponse->body;
             }
-           
+
             try {
                 $this->parse($httpBody,  $cal_class, $cal_ord );
             } catch(\Exception $e) {
@@ -950,9 +993,9 @@ END:VCALENDAR';
         } // end foreach
 
         usort($this->events, array($this, "eventSortComparer"));
-        return $this->getFutureEvents();
+		return ($this->date_start || $this->date_end) ? $this->getEventsByDateRange($this->date_start, $this->date_end) : $this->getFutureEvents();
     }
-    
+
     private static function getCalendarUrl($calId)
     {
         $protocol = strtolower(explode('://', $calId)[0]);
@@ -962,5 +1005,5 @@ END:VCALENDAR';
         else
         { return 'https://www.google.com/calendar/ical/'.$calId.'/public/basic.ics'; }
     }
-    
+
 }

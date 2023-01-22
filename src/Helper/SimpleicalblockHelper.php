@@ -79,6 +79,8 @@ class SimpleicalblockHelper
                 'blockid' => 'AZ',
   //              'title' => Text::_('MOD_SIMPLEICALBLOCK_TITLE_DFT'),
                 'calendar_id' => '',
+                'date_start' => '',
+                'date_end' => '',
                 'event_count' => 10,
                 'event_period' => 92,
                 'transient_time' => 60,

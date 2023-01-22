@@ -74,7 +74,8 @@ echo '<div id="' . $attributes['anchorId']  . '" >';
         $sflgi = $attributes['suffix_lgi_class'];
         $sflgia = $attributes['suffix_lgia_class'];
         $data = IcsParser::getData($attributes);
-        if (!empty($data) && is_array($data)) {
+
+	if (!empty($data) && is_array($data)) {
             date_default_timezone_set($tzid_ui);
             echo '<ul class="list-group' .  $attributes['suffix_lg_class'] . ' simple-ical-widget">';
             $curdate = '';

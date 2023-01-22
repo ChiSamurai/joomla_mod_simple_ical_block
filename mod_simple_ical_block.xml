@@ -29,6 +29,8 @@
 			    <!-- Title unnecessary because there is a module title -->
 				<!-- field name="title" type="text" default="Events" label="MOD_SIMPLEICALBLOCK_TITLE" description="MOD_SIMPLEICALBLOCK_TITLE_DESC" /  replaced by module title -->
 				<field name="calendar_id" type="text" default="#example" label="MOD_SIMPLEICALBLOCK_CALENDAR_ID" description="MOD_SIMPLEICALBLOCK_CALENDAR_ID_DESC" />
+				<field name="date_start" type="calendar" required="false" default="" showtime="true" format="%Y-%m-%d %H:%M" label="MOD_SIMPLEICALBLOCK_DATE_START" description="MOD_SIMPLEICALBLOCK_DATE_START_DESC" />
+				<field name="date_end" type="calendar" required="false" default="" showtime="true"  format="%Y-%m-%d %H:%M" label="MOD_SIMPLEICALBLOCK_DATE_END" description="MOD_SIMPLEICALBLOCK_DATE_END_DESC" />
 				<field name="event_count" type="number" min="0" max="100" default="10"  label="MOD_SIMPLEICALBLOCK_CNT_EVENTS" description="MOD_SIMPLEICALBLOCK_CNT_EVENTS_DESC" />
 				<field name="event_period" type="number" min="0" max="730" default="92"  label="MOD_SIMPLEICALBLOCK_PR_EVENTS" description="MOD_SIMPLEICALBLOCK_PR_EVENTS_DESC" />
 				<field name="startwsum" type="radio" layout="joomla.form.field.radio.switcher"
