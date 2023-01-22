@@ -993,7 +993,7 @@ END:VCALENDAR';
         } // end foreach
 
         usort($this->events, array($this, "eventSortComparer"));
-		return ($this->date_start || $this->date_end) ? $this->getEventsByDateRange($this->date_start, $this->date_end) : $this->getFutureEvents();
+		return ($this->date_start || $this->date_end) ? $this->getEventsByDateRange() : $this->getFutureEvents();
     }
 
     private static function getCalendarUrl($calId)
