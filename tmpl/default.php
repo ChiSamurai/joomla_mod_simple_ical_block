@@ -73,13 +73,16 @@ echo '<div id="' . $attributes['anchorId']  . '" >';
         $excerptlength = $attributes['excerptlength'];
         $sflgi = $attributes['suffix_lgi_class'];
         $sflgia = $attributes['suffix_lgia_class'];
+		$customEntryTemplate = $attributes['customEntryTemplate'];
         $data = IcsParser::getData($attributes);
 
 	if (!empty($data) && is_array($data)) {
             date_default_timezone_set($tzid_ui);
-            echo '<ul class="list-group' .  $attributes['suffix_lg_class'] . ' simple-ical-widget">';
+			$containerTag = $customEntryTemplate ? "div" : "ul";
+			echo '<'. $containerTag . ' class="list-group ' .  $attributes['suffix_lg_class'] . ' simple-ical-widget">';
             $curdate = '';
             foreach($data as $e) {
+
                 $idlist = explode("@", $e->uid );
                 $itemid = 'b' . $attributes['blockid'] . '_' . $idlist[0]; 
                 $e_dtstart = new Jdate ($e->start);
@@ -89,7 +92,8 @@ echo '<div id="' . $attributes['anchorId']  . '" >';
                 $e_dtend_1 = new Jdate ($e->end -1);
                 $e_dtend_1->setTimezone($tz_ui);
                 $evdate = strip_tags($e_dtstart->format($dflg, true, true) , $allowed_tags);
-                if ( !$attributes['allowhtml']) {
+
+	            if ( !$attributes['allowhtml']) {
                     if (!empty($e->summary)) $e->summary = htmlspecialchars($e->summary);
                     if (!empty($e->description)) $e->description = htmlspecialchars($e->description);
                     if (!empty($e->location)) $e->location = htmlspecialchars($e->location);
@@ -98,51 +102,66 @@ echo '<div id="' . $attributes['anchorId']  . '" >';
                     $evdate = str_replace(array("</div><div>", "</h4><h4>", "</h5><h5>", "</h6><h6>" ), '', $evdate . strip_tags( $e_dtend_1->format($dflgend, true, true) , $allowed_tags));
                 }
                 $evdtsum = (($e->startisdate === false) ? strip_tags($e_dtstart->format($dftsum, true, true) . $e_dtend->format($dftsend, true, true), $allowed_tags) : '');
-                echo '<li class="list-group-item' .  $sflgi . ((!empty($e->cal_class)) ? ' ' . SimpleicalblockHelper::sanitize_html_class($e->cal_class): '') . '">';
-                if (!$startwsum && $curdate != $evdate ) {
-                    $curdate =  $evdate;
-                    echo '<span class="ical-date">' . ucfirst($evdate) . '</span>' . (('a' == $attributes['tag_sum'] ) ? '<br>': '');
-                }
-                echo  '<' . $attributes['tag_sum'] . ' class="ical_summary' .  $sflgia . (('a' == $attributes['tag_sum'] ) ? '" data-toggle="collapse" data-bs-toggle="collapse" href="#'.
-                $itemid . '" aria-expanded="false" aria-controls="'.
-                $itemid . '">' : '">') ;
-                if (!$startwsum)	{
-                    echo $evdtsum;
-                }
-                if(!empty($e->summary)) {
-                    echo str_replace("\n", '<br>', strip_tags($e->summary,$allowed_tags));
-                }
-                echo	'</' . $attributes['tag_sum'] . '>' ;
-                if ($startwsum ) {
-                    echo '<span>', $evdate, $evdtsum, '</span>';
-                }
-                echo '<div class="ical_details' .  $sflgia . (('a' == $attributes['tag_sum'] ) ? ' collapse' : '') . '" id="',  $itemid, '">';
-                if(!empty($e->description) && trim($e->description) > '' && $excerptlength !== 0) {
-                    if ($excerptlength !== '' && strlen($e->description) > $excerptlength) {$e->description = substr($e->description, 0, $excerptlength + 1);
-                    if (rtrim($e->description) !== $e->description) {$e->description = substr($e->description, 0, $excerptlength);}
-                    else {if (strrpos($e->description, ' ', max(0,$excerptlength - 10))!== false OR strrpos($e->description, "\n", max(0,$excerptlength - 10))!== false )
-                    {$e->description = substr($e->description, 0, max(strrpos($e->description, "\n", max(0,$excerptlength - 10)),strrpos($e->description, ' ', max(0,$excerptlength - 10))));
-                    } else
-                    {$e->description = substr($e->description, 0, $excerptlength);}
-                    }
-                    }
-                    $e->description = str_replace("\n", '<br>', strip_tags($e->description,$allowed_tags) );
-                    echo   $e->description ,(strrpos($e->description, '<br>') === (strlen($e->description) - 4)) ? '' : '<br>';
-                }
-                if ($e->startisdate === false && date('yz', $e->start) === date('yz', $e->end))	{
-                    echo '<span class="time">', strip_tags($e_dtstart->format($dftstart, true, true), $allowed_tags),
-                    '</span><span class="time">', strip_tags($e_dtend->format($dftend, true, true) , $allowed_tags), '</span> ' ;
-                } else {
-                    echo '';
-                }
-                if(!empty($e->location)) {
-                    echo  '<span class="location">', str_replace("\n", '<br>', strip_tags($e->location,$allowed_tags)) , '</span>';
-                }
-                
-                
-                echo '</div></li>';
-            }
-            echo '</ul>';
+
+				if($customEntryTemplate) {
+					$replacementMap = [];
+					foreach($e as $key => $v) {
+						$replacementMap['__' . $key. '__'] = $v;
+					}
+					$replacementMap['__dtstart__'] = $e_dtstart;
+					$replacementMap['__dtend__'] = $e_dtstart;
+					$replacementMap['__evdate__'] = $evdate;
+					$replacementMap['__time__'] = strip_tags($e_dtstart->format($dftstart, true, true), $allowed_tags);
+
+					echo strip_tags(str_replace(array_keys($replacementMap), $replacementMap, $customEntryTemplate), $allowed_tags);
+				} else {
+					echo '<li class="list-group-item' .  $sflgi . ((!empty($e->cal_class)) ? ' ' . SimpleicalblockHelper::sanitize_html_class($e->cal_class): '') . '">';
+					if (!$startwsum && $curdate != $evdate ) {
+						$curdate =  $evdate;
+						echo '<span class="ical-date">' . ucfirst($evdate) . '</span>' . (('a' == $attributes['tag_sum'] ) ? '<br>': '');
+					}
+					echo  '<' . $attributes['tag_sum'] . ' class="ical_summary' .  $sflgia . (('a' == $attributes['tag_sum'] ) ? '" data-toggle="collapse" data-bs-toggle="collapse" href="#'.
+							$itemid . '" aria-expanded="false" aria-controls="'.
+							$itemid . '">' : '">') ;
+					if (!$startwsum)	{
+						echo $evdtsum;
+					}
+					if(!empty($e->summary)) {
+						echo str_replace("\n", '<br>', strip_tags($e->summary,$allowed_tags));
+					}
+					echo	'</' . $attributes['tag_sum'] . '>' ;
+					if ($startwsum ) {
+						echo '<span>', $evdate, $evdtsum, '</span>';
+					}
+					echo '<div class="ical_details' .  $sflgia . (('a' == $attributes['tag_sum'] ) ? ' collapse' : '') . '" id="',  $itemid, '">';
+					if(!empty($e->description) && trim($e->description) > '' && $excerptlength !== 0) {
+						if ($excerptlength !== '' && strlen($e->description) > $excerptlength) {$e->description = substr($e->description, 0, $excerptlength + 1);
+							if (rtrim($e->description) !== $e->description) {$e->description = substr($e->description, 0, $excerptlength);}
+							else {if (strrpos($e->description, ' ', max(0,$excerptlength - 10))!== false OR strrpos($e->description, "\n", max(0,$excerptlength - 10))!== false )
+							{$e->description = substr($e->description, 0, max(strrpos($e->description, "\n", max(0,$excerptlength - 10)),strrpos($e->description, ' ', max(0,$excerptlength - 10))));
+							} else
+							{$e->description = substr($e->description, 0, $excerptlength);}
+							}
+						}
+						$e->description = str_replace("\n", '<br>', strip_tags($e->description,$allowed_tags) );
+						echo   $e->description ,(strrpos($e->description, '<br>') === (strlen($e->description) - 4)) ? '' : '<br>';
+					}
+					if ($e->startisdate === false && date('yz', $e->start) === date('yz', $e->end))	{
+						echo '<span class="time">', strip_tags($e_dtstart->format($dftstart, true, true), $allowed_tags),
+						'</span><span class="time">', strip_tags($e_dtend->format($dftend, true, true) , $allowed_tags), '</span> ' ;
+					} else {
+						echo '';
+					}
+					if(!empty($e->location)) {
+						echo  '<span class="location">', str_replace("\n", '<br>', strip_tags($e->location,$allowed_tags)) , '</span>';
+					}
+
+
+					echo '</div></li>';
+
+				}
+			}
+				echo '</'. $containerTag . '>';
             date_default_timezone_set($old_timezone);
         }
  

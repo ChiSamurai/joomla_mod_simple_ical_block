@@ -942,7 +942,7 @@ END:VCALENDAR';
         return $data;
     }
 
-    /**
+	/**
      * Fetches from calender using calendar_ids, event_count and
      *
      *    ['calendar_id']  id or url of the calender to fetch data

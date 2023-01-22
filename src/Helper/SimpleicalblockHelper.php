@@ -101,6 +101,7 @@ class SimpleicalblockHelper
                 //               'align'=>'',
                 'className'=>'',
                 'anchorId'=> '',
+	            'customEntryTemplate' => ''
             ),
             $block_attributes
             );

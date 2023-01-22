@@ -105,7 +105,14 @@
 					default="900"
 					label="COM_MODULES_FIELD_CACHE_TIME_LABEL"
 					description="COM_MODULES_FIELD_CACHE_TIME_DESC" />
-				
+				<field
+					name="customEntryTemplate"
+					type="editor"
+					filter="safehtml"
+					default=""
+					label="MOD_SIMPLEICALBLOCK_CUSTOMENTRYTEMPLATE"
+					description="MOD_SIMPLEICALBLOCK_CUSTOMENTRYTEMPLATE_DESC">
+				</field>
 			</fieldset>
 			<fieldset name="Documentation" >
 				<field name="basic_help"  type="spacer" hr="false" class="span-12"
@@ -206,6 +213,10 @@
 					label="MOD_SIMPLEICALBLOCK_CACHE_TIME_HELP_LB"
 					description="MOD_SIMPLEICALBLOCK_CACHE_TIME_HELP"
  					 />
+				<field name="customEntryTemplate_help"  type="note"
+					   label="MOD_SIMPLEICALBLOCK_CUSTOMENTRYTEMPLATE"
+					   description="MOD_SIMPLEICALBLOCK_CUSTOMENTRYTEMPLATE_HELP"
+				/>
 			</fieldset>
 		</fields>
 	</config>
