@@ -284,14 +284,14 @@ END:VCALENDAR';
 	 * The starting date from which on the events should be displayed (
 	 *
 	 * @var mixed|null
-	 * @since TBD
+	 * @since 2.2.0
 	 */
 	protected $date_start = NULL;
 	/**
 	 * The end date from which on the events should be displayed (
 	 *
 	 * @var mixed|null
-	 * @since TBD
+	 * @since 2.2.0
 	 */
 	protected $date_end = NULL;
 	/**
