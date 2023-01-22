@@ -904,6 +904,7 @@ END:VCALENDAR';
             }
             $eventObj->endisdate = $eventObj->startisdate;
         }
+		$eventObj->fulldayevent = ($eventObj->startisdate && $eventObj->endisdate && ($eventObj->start - $eventObj->end <= 86400));
         return $eventObj;
     }
     /**
@@ -986,7 +987,7 @@ END:VCALENDAR';
             }
 
             try {
-                $this->parse($httpBody,  $cal_class, $cal_ord );
+	            $this->parse($httpBody,  $cal_class, $cal_ord );
             } catch(\Exception $e) {
                 continue ;
             }

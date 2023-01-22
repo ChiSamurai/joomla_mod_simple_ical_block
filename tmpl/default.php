@@ -102,7 +102,6 @@ echo '<div id="' . $attributes['anchorId']  . '" >';
                     $evdate = str_replace(array("</div><div>", "</h4><h4>", "</h5><h5>", "</h6><h6>" ), '', $evdate . strip_tags( $e_dtend_1->format($dflgend, true, true) , $allowed_tags));
                 }
                 $evdtsum = (($e->startisdate === false) ? strip_tags($e_dtstart->format($dftsum, true, true) . $e_dtend->format($dftsend, true, true), $allowed_tags) : '');
-
 				if($customEntryTemplate) {
 					$replacementMap = [];
 					foreach($e as $key => $v) {
@@ -110,9 +109,9 @@ echo '<div id="' . $attributes['anchorId']  . '" >';
 					}
 					$replacementMap['__dtstart__'] = $e_dtstart;
 					$replacementMap['__dtend__'] = $e_dtstart;
-					$replacementMap['__evdate__'] = $evdate;
-					$replacementMap['__time__'] = strip_tags($e_dtstart->format($dftstart, true, true), $allowed_tags);
 
+					$replacementMap['__evdate__'] = $evdate;
+					$replacementMap['__time__'] = $e->fulldayevent ? '' : strip_tags($e_dtstart->format($dftstart, true, true), $allowed_tags);
 					echo strip_tags(str_replace(array_keys($replacementMap), $replacementMap, $customEntryTemplate), $allowed_tags);
 				} else {
 					echo '<li class="list-group-item' .  $sflgi . ((!empty($e->cal_class)) ? ' ' . SimpleicalblockHelper::sanitize_html_class($e->cal_class): '') . '">';
